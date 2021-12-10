@@ -1,3 +1,14 @@
+# sensitive files
+family_tree.docx
+family_tree.xlsx
+family_tree.xls
+
+# visualizations
+*.svg
+
+# private settings
+.vscode
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
