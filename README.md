@@ -15,3 +15,9 @@ pip3 install openpyxl
 pip3 install xlrd
 sudo apt install graphviz       # only if visualization is not working
 ```
+
+## Fill out template
+Rename input_template_family_tree.xls to family_tree.xls
+
+## Limitations of current version
+Only one marriage can be handled for one person
