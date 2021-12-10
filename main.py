@@ -17,7 +17,7 @@ class FamilyTreeHandler():
         self.df_events = pd.read_excel(xls,sheet_name="events")
 
     def main(self):
-        self.dot = Digraph(comment = 'Family tree', graph_attr = {'splines':'ortho'})
+        self.dot = Digraph(comment = 'Family tree')#, graph_attr = {'splines':'ortho'})
         self.addPeople()
         self.show()
 
@@ -106,12 +106,16 @@ class FamilyTreeHandler():
     #########                     string manipulation for visualization                   
     ####################################################################################
     def getPersonLabel(self,df_row):
-        data = df_row.iloc[0].astype('string').fillna("")
-        surname = str(data['surname'])
-        firstname = str(data['firstname'])
-        birth_date = str(data['birth_date'])
-        death_date = str(data['death_date'])
-        birth_place = str(data['birth_place_id'])
+        person = df_row.iloc[0]
+        surname = str(person['surname'])
+        firstname = str(person['firstname'])
+        birth_date = self.getDateTimeString(person['birth_date'], '%Y-%m-%d')
+        death_date = self.getDateTimeString(person['death_date'], '%Y-%m-%d')
+        try:
+            place = self.df_places[self.df_places['id'] == int(person['birth_place_id'])]
+            birth_place = str(place['name'].iloc[0])
+        except:
+            birth_place = ''
         return (
             f"{surname} {firstname}\n"
             f"{birth_date} {death_date}\n"
@@ -128,6 +132,12 @@ class FamilyTreeHandler():
             f"it still has to be implemented\n"
             f"{notes}"
         )
+
+    def getDateTimeString(self, value, format, errorValue = ''):
+        try:
+            return str(value.strftime(format))
+        except:
+            return errorValue
 
 if not os.path.exists(INPUT_EXCEL_PATH):
     print(INPUT_EXCEL_PATH + ' is not exist. Family tree can not be created.')
