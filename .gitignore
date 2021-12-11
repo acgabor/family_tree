@@ -6,6 +6,7 @@ family_tree.xls
 # visualizations
 *.svg
 *.gv
+family_tree
 
 # private settings
 .vscode

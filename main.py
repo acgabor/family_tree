@@ -17,7 +17,7 @@ class FamilyTreeHandler():
         self.df_events = pd.read_excel(xls,sheet_name="events")
 
     def main(self):
-        self.dot = Digraph(comment = 'Family tree')#, graph_attr = {'splines':'ortho'})
+        self.dot = Digraph('Family tree')#, graph_attr = {'splines':'ortho'})
         self.addPeople()
         self.show()
 
@@ -41,7 +41,7 @@ class FamilyTreeHandler():
         self.familiesAdded.append(family_id)
 
         self.addFamilyNode(family_id)
-        self.addPartnerEdge(family_id,person_id)
+        self.addFamilyEdge(family_id,person_id)
         self.addSpouse(family_id, person_id)
         self.addChildren(family_id)
 
@@ -50,7 +50,8 @@ class FamilyTreeHandler():
         if not spouse_id:
             return
         self.addPerson(spouse_id)
-        self.addPartnerEdge(family_id,spouse_id)
+        self.addFamilyEdge(family_id,spouse_id)
+        self.addMarriageEdge(person_id,spouse_id)
 
     def addChildren(self, family_id):
         df_children = self.df_children[self.df_children['family_id'] == family_id]
@@ -79,28 +80,41 @@ class FamilyTreeHandler():
     ####################################################################################
     ###############              Node - Edge operations             
     ####################################################################################
+    #https://www.graphviz.org/doc/info/attrs.html
     def addPersonNode(self, person_id):
         df_row = self.df_people[self.df_people['id'] == person_id]
+        color = '#FFC0CB' if str(df_row['sex'].iloc[0]) == 'female' else '#B0E0E6'
         person_dot_id = 'p'+str(person_id)
-        self.dot.node(person_dot_id, tooltip = self.getPersonTooltip(df_row), shape = 'rect', label = self.getPersonLabel(df_row))
+        self.dot.node(person_dot_id, 
+            tooltip = self.getPersonTooltip(df_row),
+            shape = 'rect',
+            label = self.getPersonLabel(df_row),
+            fillcolor=color,
+            style='filled'
+        )
 
     def addFamilyNode(self, family_id):
         family_dot_id = 'f'+str(family_id)
-        self.dot.node(family_dot_id, shape = 'ellipse', color = 'yellow', label="")
+        self.dot.node(family_dot_id, shape = 'ellipse', color = 'black', label="")
 
-    def addPartnerEdge(self, family_id, person_id):
+    def addFamilyEdge(self, family_id, person_id):
         family_dot_id = 'f'+str(family_id)
         person_dot_id = 'p'+str(person_id)
-        self.dot.edge(person_dot_id, family_dot_id, arrowhead = 'none', color = 'red')
+        self.dot.edge(person_dot_id, family_dot_id, color = 'black')
+
+    def addMarriageEdge(self, person1_id, person2_id):
+        person1_dot_id = 'p'+str(person1_id)
+        person2_dot_id = 'p'+str(person2_id)
+        self.dot.edge(person1_dot_id, person2_dot_id, arrowhead='none', color = 'black', constraint='false')
 
     def addChildrenEdge(self, family_id, person_id):
         family_dot_id = 'f'+str(family_id)
         person_dot_id = 'p'+str(person_id)
-        self.dot.edge(person_dot_id, family_dot_id, arrowhead = 'none', color = 'blue')
+        self.dot.edge(family_dot_id, person_dot_id, color = 'black')
 
     def show(self):
         self.dot.format = 'svg'
-        self.dot.render('family_tree.gv.svg', view = True)
+        self.dot.render('family_tree', view = True)
 
     ####################################################################################
     #########                     string manipulation for visualization                   
