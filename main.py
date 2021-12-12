@@ -35,8 +35,12 @@ class ConfigHandler():
             "output_format": {
                 "comment": "the output format can be set here e.g. pdf, svg.",
                 "format": "pdf"
+            },
+            "colors": {
+                "male_background": "#B0E0E6",
+                "female_background": "#FFC0CB"
             }
-        }
+        } 
         with open(self.configPath, 'w') as f:
             json.dump(self.config, f, indent=2)
 
@@ -152,7 +156,10 @@ class FamilyTreeHandler(ConfigHandler):
     #https://www.graphviz.org/doc/info/attrs.html
     def addPersonNode(self, person_id):
         df_row = self.df_people[self.df_people['id'] == person_id]
-        color = '#FFC0CB' if str(df_row['sex'].iloc[0]) == 'female' else '#B0E0E6'
+        if str(df_row['sex'].iloc[0]) == 'female':
+            color = self.config["colors"]["female_background"]
+        else:
+            color = self.config["colors"]["male_background"]
         person_dot_id = 'p'+str(person_id)
         self.dot.node(person_dot_id, 
             tooltip = '', #self.getPersonTooltip(df_row),
