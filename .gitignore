@@ -7,6 +7,7 @@ family_tree.xls
 *.svg
 *.gv
 family_tree
+*.pdf
 
 # private settings
 .vscode

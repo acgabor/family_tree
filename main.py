@@ -31,10 +31,14 @@ class ConfigHandler():
                 "example1": False,
                 "example2": True,
                 "value": False,
+            },
+            "output_format": {
+                "comment": "the output format can be set here e.g. pdf, svg.",
+                "format": "pdf"
             }
         }
         with open(self.configPath, 'w') as f:
-            json.dump(self.config, f)
+            json.dump(self.config, f, indent=2)
 
     def readConfig(self):
         with open(self.configPath, 'r') as f:
@@ -178,7 +182,7 @@ class FamilyTreeHandler(ConfigHandler):
         self.dot.edge(family_dot_id, person_dot_id, color = 'black')
 
     def show(self):
-        self.dot.format = 'svg'
+        self.dot.format = self.config["output_format"]["format"]
         self.dot.render('family_tree', view = True)
 
     ####################################################################################

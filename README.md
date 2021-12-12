@@ -1,11 +1,11 @@
 # Family tree
+- This readme contains description for ubuntu os. Some of the points can be different on Windows.
 ## Clone the repo
 ```
 git clone git@github.com:acgabor/family_tree.git
 ```
 
 ## Install packages (python3.6.9)
-
 [Graphviz](https://graphviz.org/)
 ```
 sudo apt-get install xdg-utils  # only if missing
@@ -14,6 +14,17 @@ pip3 install pandas
 pip3 install openpyxl
 pip3 install xlrd
 sudo apt install graphviz       # only if visualization is not working
+```
+
+## Create exe (Optional)
+```
+cd /tmp
+git clone https://github.com/pyinstaller/pyinstaller
+cd pyinstaller/bootloader
+sudo apt-get install build-essential zlib1g-dev
+sudo python3 ./waf all
+pip3 install pyinstaller
+bash create_exe.sh
 ```
 
 ## Fill out template
