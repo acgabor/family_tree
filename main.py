@@ -1,14 +1,56 @@
 import os
 from graphviz import Digraph
 import pandas as pd
+import json
+import traceback
+import numpy as np
 
-INPUT_EXCEL_PATH = 'family_tree.xls'
+class MyException(Exception):
+    pass
 
-class FamilyTreeHandler():
+class ConfigHandler():
+    configPath = "config.json"
+    config = None
+    def __init__(self):
+        if not os.path.exists(self.configPath):
+            self.writeConfig()
+        self.readConfig()
+        self.checkInputs()
+
+    def writeConfig(self):
+        self.config = {
+            "input_excel_path": "family_tree.xls",
+            "events_to_show": {
+                "comment": "here you can define the list of events, you want to visualize. If you set it to 'all' then each events will be listed",
+                "example1": ["occupation","foglalkozas"],
+                "example2": ["all"],
+                "event_types": ["all"],
+            },
+            "show_notes": {
+                "comment": "set this value to True if you want to show the notes as well",
+                "example1": False,
+                "example2": True,
+                "value": False,
+            }
+        }
+        with open(self.configPath, 'w') as f:
+            json.dump(self.config, f)
+
+    def readConfig(self):
+        with open(self.configPath, 'r') as f:
+            self.config = json.load(f)
+
+    def checkInputs(self):
+        if not os.path.exists(self.config["input_excel_path"]):
+            print(self.config["input_excel_path"] + ' is not exist. Family tree can not be created.')
+            raise MyException
+
+class FamilyTreeHandler(ConfigHandler):
     peopleAdded = []
     familiesAdded = []
-    def __init__(self, inputExcelPath):
-        xls = pd.ExcelFile(inputExcelPath)
+    def __init__(self):
+        super().__init__()
+        xls = pd.ExcelFile(self.config["input_excel_path"])
         self.df_people = pd.read_excel(xls,sheet_name="people")
         self.df_families = pd.read_excel(xls,sheet_name="families")
         self.df_families['person2_id'] = self.df_families['person2_id'].fillna(0).astype("int32")
@@ -17,9 +59,32 @@ class FamilyTreeHandler():
         self.df_events = pd.read_excel(xls,sheet_name="events")
 
     def main(self):
+        self.filterEvents()
+        self.assignPlaces()
         self.dot = Digraph('Family tree')#, graph_attr = {'splines':'ortho'})
         self.addPeople()
         self.show()
+
+    def filterEvents(self):
+        events = self.config["events_to_show"]["event_types"]
+        if len(events) == 1:
+            if events[0].lower() == "all":
+                return
+        self.df_events = self.df_events[self.df_events["type"].isin(events)]
+
+    def assignPlaces(self):
+        self.df_people = self.assignPlace(self.df_people, 'birth_place_id', 'birth_place')
+        self.df_people = self.assignPlace(self.df_people, 'death_place_id', 'death_place')
+        self.df_people = self.assignPlace(self.df_people, 'burial_place_id', 'burial_place')
+        self.df_events = self.assignPlace(self.df_events, 'place_id', 'place')
+
+    def assignPlace(self, df, id_column_name, new_column_name):
+        return df.merge(
+            self.df_places[['id', 'name']].rename(columns ={"name":new_column_name}),
+            how = 'left',
+            left_on = id_column_name,
+            right_on = 'id'
+        ).drop(['id_y',id_column_name],axis='columns').rename(columns ={"id_x":'id'})
 
     def addPeople(self):
         for df_index, df_row in self.df_people.iterrows():
@@ -86,7 +151,7 @@ class FamilyTreeHandler():
         color = '#FFC0CB' if str(df_row['sex'].iloc[0]) == 'female' else '#B0E0E6'
         person_dot_id = 'p'+str(person_id)
         self.dot.node(person_dot_id, 
-            tooltip = self.getPersonTooltip(df_row),
+            tooltip = '', #self.getPersonTooltip(df_row),
             shape = 'rect',
             label = self.getPersonLabel(df_row),
             fillcolor=color,
@@ -120,23 +185,22 @@ class FamilyTreeHandler():
     #########                     string manipulation for visualization                   
     ####################################################################################
     def getPersonLabel(self,df_row):
-        person = df_row.iloc[0]
-        surname = str(person['surname'])
-        firstname = str(person['firstname'])
-        birth_date = self.getDateTimeString(person['birth_date'], '%Y-%m-%d')
-        death_date = self.getDateTimeString(person['death_date'], '%Y-%m-%d')
-        try:
-            place = self.df_places[self.df_places['id'] == int(person['birth_place_id'])]
-            birth_place = str(place['name'].iloc[0])
-        except:
-            birth_place = ''
+        person = df_row.iloc[0].replace(np.nan,'',regex=True)
+        name = self.getNameString(person)
+        birth_date = self.getDateTimeString(person['birth_date'], '%Y.%m.%d')
+        death_date = self.getDateTimeString(person['death_date'], '%Y.%m.%d')
+        events = self.getEventsString(person)
+        birth_place = str(person['birth_place'])
+
         return (
-            f"{surname} {firstname}\n"
-            f"{birth_date} {death_date}\n"
-            f"{birth_place}"
+            f"{name}\n"
+            f"{birth_date} - {death_date}\n"
+            f"{birth_place}\n"
+            f"{events}"
         )
 
     def getPersonTooltip(self,df_row):
+        # it is not used right now
         data = df_row.iloc[0].astype('string').fillna("")
         surname = str(data['surname'])
         firstname = str(data['firstname'])
@@ -147,15 +211,58 @@ class FamilyTreeHandler():
             f"{notes}"
         )
 
+    def getEventsString(self, person):
+        person_id = person['id']
+        events = self.df_events[self.df_events['person_id'] == person_id]
+        eventsString = ""
+        for index, row in events.iterrows():
+            eventsString += self.getEventString(row)
+        return eventsString
+
+    def getEventString(self, event_row, errorValue = ''):
+        event_row = event_row.replace(np.nan,'',regex=True)
+        type = str(event_row['type'])
+        value = self.getStringWithPrefixIfNotEmpty(str(event_row['value'])," - ")
+        date = self.getDateTimeString(event_row['date'], '%Y.%m.%d')
+        date = self.getStringWithPrefixIfNotEmpty(date," - ")
+        if self.config["show_notes"]["value"]:
+            note = self.getStringWithPrefixIfNotEmpty(str(event_row['note'])," - ")
+        else:
+            note = ""
+        place = self.getStringWithPrefixIfNotEmpty(str(event_row['place'])," - ")
+
+        return (
+            f"{type}{date}{value}{place}{note}\n"
+        )
+
+    def getStringWithPrefixIfNotEmpty(self, inputValue, prefix):
+        if inputValue != "":
+            return prefix + inputValue
+        else:
+            return inputValue
+
+    def getNameString(self, person, errorValue = ''):
+        try:
+            surname = person['surname']
+            firstname = person['firstname']
+            birth_surname = person['birth_surname']
+            birth_firstname = person['birth_firstname']
+            name = surname + " " + firstname
+            if birth_surname != '':
+                name += "\n(" + birth_surname + " " + birth_firstname + ")"
+            return name
+        except:
+            return errorValue
+
     def getDateTimeString(self, value, format, errorValue = ''):
         try:
             return str(value.strftime(format))
         except:
             return errorValue
 
-if not os.path.exists(INPUT_EXCEL_PATH):
-    print(INPUT_EXCEL_PATH + ' is not exist. Family tree can not be created.')
-    exit()
-
-familyTreeHandler = FamilyTreeHandler(INPUT_EXCEL_PATH)
-familyTreeHandler.main()
+try:
+    familyTreeHandler = FamilyTreeHandler()
+    familyTreeHandler.main()
+except:
+    traceback.print_exc()
+    input("Press Enter to exit...")

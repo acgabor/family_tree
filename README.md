@@ -17,7 +17,11 @@ sudo apt install graphviz       # only if visualization is not working
 ```
 
 ## Fill out template
-Rename input_template_family_tree.xls to family_tree.xls
+- Rename input_template_family_tree.xls to family_tree.xls or modify "input_excel_path" in the config file
+
+## Set config.json
+- It contains user defined settings
+- It is automatically created if not exists
 
 ## Limitations of current version
-Only one marriage can be handled for one person
+- Only one marriage can be handled for one person
