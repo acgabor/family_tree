@@ -1,5 +1,11 @@
 # Family tree
 - This readme contains description for ubuntu os. Some of the points can be different on Windows (installation steps can be seen later).
+
+## Output example
+<p align="center">
+  <img src="output_example.jpg" width="350" title="output example">
+</p>
+
 ## Clone the repo
 ```
 git clone git@github.com:acgabor/family_tree.git

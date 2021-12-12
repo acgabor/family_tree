@@ -1,0 +1,30 @@
+{
+  "input_excel_path": "input_template_family_tree.xls",
+  "events_to_show": {
+    "comment": "here you can define the list of events, you want to visualize. If you set it to 'all' then each events will be listed",
+    "example1": [
+      "occupation",
+      "foglalkozas"
+    ],
+    "example2": [
+      "all"
+    ],
+    "event_types": [
+      "all"
+    ]
+  },
+  "show_notes": {
+    "comment": "set this value to True if you want to show the notes as well",
+    "example1": false,
+    "example2": true,
+    "value": false
+  },
+  "output_format": {
+    "comment": "the output format can be set here e.g. pdf, svg.",
+    "format": "pdf"
+  },
+  "colors": {
+    "male_background": "#B0E0E6",
+    "female_background": "#FFC0CB"
+  }
+}
