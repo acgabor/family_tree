@@ -1,5 +1,5 @@
 # Family tree
-- This readme contains description for ubuntu os. Some of the points can be different on Windows.
+- This readme contains description for ubuntu os. Some of the points can be different on Windows (installation steps can be seen later).
 ## Clone the repo
 ```
 git clone git@github.com:acgabor/family_tree.git
@@ -13,7 +13,7 @@ pip3 install graphviz
 pip3 install pandas
 pip3 install openpyxl
 pip3 install xlrd
-sudo apt install graphviz       # only if visualization is not working
+sudo apt install graphviz
 ```
 
 ## Create exe (Optional)
@@ -36,3 +36,17 @@ bash create_exe.sh
 
 ## Limitations of current version
 - Only one marriage can be handled for one person
+
+# Install on Windows
+## Download and install python3
+## Install packages
+```
+pip install pyinstaller
+pip install pandas
+pip install openpyxl
+pip install xlrd
+pip install graphviz
+```
+## Download [graphviz](https://graphviz.org/download/) and install
+- During installation, add graphviz to system path
+## Run create_exe.bat
